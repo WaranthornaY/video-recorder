@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Offline Video Recorder</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background: #0b0d0e;
+    color: white;
+}
+
+.app {
+    width: 100%;
+    max-width: 1000px;
+    margin: auto;
+}
+
+/* Login */
+
+#loginScreen {
+    width: 100%;
+    max-width: 400px;
+    margin: 100px auto;
+    padding: 35px;
+    text-align: center;
+    background: #191919;
+    border: 1px solid #333;
+    border-radius: 18px;
+}
+
+#loginScreen h1 {
+    margin-top: 0;
+}
+
+#codeInput {
+    width: 100%;
+    padding: 14px;
+    margin-top: 15px;
+
+    background: #111;
+    color: white;
+
+    border: 1px solid #444;
+    border-radius: 8px;
+
+    font-size: 20px;
+    text-align: center;
+    outline: none;
+}
+
+#loginButton {
+    width: 100%;
+    margin-top: 15px;
+    padding: 14px;
+
+    background: #1976d2;
+    color: white;
+
+    border: none;
+    border-radius: 8px;
+
+    font-size: 17px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#loginError {
+    height: 22px;
+    margin-top: 10px;
+    color: #ff5252;
+}
+
+/* Recorder */
+
+#recorderScreen {
+    display: none;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.header h1 {
+    margin: 0;
+}
+
+.headerRight {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.clock {
+    padding: 8px 12px;
+
+    background: #171717;
+    border: 1px solid #333;
+    border-radius: 8px;
+
+    text-align: right;
+}
+
+#currentTime {
+    font-family: monospace;
+    font-size: 19px;
+    font-weight: bold;
+}
+
+#currentDate {
+    color: #aaa;
+    font-size: 13px;
+}
+
+.offline {
+    padding: 7px 10px;
+
+    background: #15351b;
+    border: 1px solid #2e7d32;
+    border-radius: 20px;
+
+    color: #66bb6a;
+    font-size: 13px;
+}
+
+/* Camera */
+
+.videoBox {
+    position: relative;
+
+    width: 100%;
+
+    background: black;
+    border: 1px solid #333;
+    border-radius: 15px;
+
+    overflow: hidden;
+}
+
+#preview {
+    display: block;
+
+    width: 100%;
+    height: auto;
+
+    background: black;
+}
+
+/* Recording indicator */
+
+.recordingTimer {
+    position: absolute;
+
+    top: 15px;
+    right: 15px;
+
+    display: none;
+
+    padding: 8px 12px;
+
+    background: rgba(0, 0, 0, 0.75);
+    border-radius: 8px;
+
+    font-family: monospace;
+    font-size: 18px;
+}
+
+.redDot {
+    display: inline-block;
+
+    width: 10px;
+    height: 10px;
+
+    margin-right: 6px;
+
+    background: red;
+    border-radius: 50%;
+
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0.2;
+    }
+}
+
+/* Status */
+
+#status {
+    min-height: 24px;
+
+    margin: 15px 0;
+
+    text-align: center;
+
+    color: #aaa;
+}
+
+/* Buttons */
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+button {
+    padding: 13px 25px;
+
+    border: none;
+    border-radius: 9px;
+
+    font-size: 17px;
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+#recordButton {
+    background: #e53935;
+    color: white;
+}
+
+#stopButton {
+    background: #555;
+    color: white;
+}
+
+/* Filename */
+
+.filenameBox {
+    margin-top: 20px;
+    padding: 15px;
+
+    background: #191919;
+    border-radius: 10px;
+}
+
+.filenameBox label {
+    display: block;
+    margin-bottom: 8px;
+    color: #aaa;
+}
+
+#filename {
+    width: 100%;
+    padding: 11px;
+
+    background: #111;
+    color: white;
+
+    border: 1px solid #444;
+    border-radius: 7px;
+
+    font-size: 16px;
+    outline: none;
+}
+
+/* Result */
+
+#result {
+    display: none;
+
+    margin-top: 20px;
+    padding: 20px;
+
+    background: #191919;
+    border: 1px solid #333;
+    border-radius: 12px;
+}
+
+#recordedVideo {
+    width: 100%;
+    display: block;
+
+    background: black;
+    border-radius: 10px;
+}
+
+.resultButtons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+
+    margin-top: 15px;
+}
+
+#downloadButton {
+    background: #43a047;
+    color: white;
+}
+
+#newButton {
+    background: #1976d2;
+    color: white;
+}
+
+@media (max-width: 700px) {
+
+    body {
+        padding: 10px;
+    }
+
+    .header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .headerRight {
+        justify-content: space-between;
+    }
+
+    .controls,
+    .resultButtons {
+        flex-direction: column;
+    }
+
+    button {
+        width: 100%;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- LOGIN -->
+
+    <div id="loginScreen">
+
+        <h1>🎥 Video Recorder</h1>
+
+        <p>Enter the access code</p>
+
+        <input
+            id="codeInput"
+            type="password"
+            placeholder="Access code"
+            autocomplete="off"
+        >
+
+        <button id="loginButton">
+            Enter
+        </button>
+
+        <div id="loginError"></div>
+
+    </div>
+
+
+    <!-- RECORDER -->
+
+    <div id="recorderScreen">
+
+        <div class="header">
+
+            <h1>🎥 Video Recorder</h1>
+
+            <div class="headerRight">
+
+                <div class="clock">
+
+                    <div id="currentTime">
+                        00:00:00
+                    </div>
+
+                    <div id="currentDate">
+                        Loading...
+                    </div>
+
+                </div>
+
+                <div class="offline">
+                    OFFLINE
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- CAMERA -->
+
+        <div class="videoBox">
+
+            <video
+                id="preview"
+                autoplay
+                muted
+                playsinline
+            ></video>
+
+            <div
+                id="recordingTimer"
+                class="recordingTimer"
+            >
+
+                <span class="redDot"></span>
+
+                <span id="timerText">
+                    00:00
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div id="status">
+            Ready.
+        </div>
+
+
+        <!-- CONTROLS -->
+
+        <div class="controls">
+
+            <button
+                id="recordButton"
+            >
+                🔴 Record
+            </button>
+
+            <button
+                id="stopButton"
+                disabled
+            >
+                ⏹ Stop
+            </button>
+
+        </div>
+
+
+        <!-- FILENAME -->
+
+        <div class="filenameBox">
+
+            <label>
+                Filename
+            </label>
+
+            <input
+                id="filename"
+                type="text"
+                value="recording"
+            >
+
+        </div>
+
+
+        <!-- RESULT -->
+
+        <div id="result">
+
+            <h2>Recording Complete</h2>
+
+            <video
+                id="recordedVideo"
+                controls
+                playsinline
+            ></video>
+
+            <div class="resultButtons">
+
+                <button id="downloadButton">
+                    Download
+                </button>
+
+                <button id="newButton">
+                    New Recording
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- Canvas is used to permanently put the timestamp into the video -->
+
+<canvas
+    id="recordCanvas"
+    style="display:none"
+></canvas>
+
+
+<script>
+
+const ACCESS_CODE = "19052557";
+
+let cameraStream = null;
+let recorder = null;
+
+let canvasStream = null;
+
+let chunks = [];
+
+let recordingBlob = null;
+let recordingURL = null;
+
+let recording = false;
+
+let animationFrame = null;
+
+let recordingSeconds = 0;
+let timerInterval = null;
+
+
+/* Elements */
+
+const loginScreen =
+    document.getElementById("loginScreen");
+
+const recorderScreen =
+    document.getElementById("recorderScreen");
+
+const codeInput =
+    document.getElementById("codeInput");
+
+const loginButton =
+    document.getElementById("loginButton");
+
+const loginError =
+    document.getElementById("loginError");
+
+const preview =
+    document.getElementById("preview");
+
+const recordButton =
+    document.getElementById("recordButton");
+
+const stopButton =
+    document.getElementById("stopButton");
+
+const status =
+    document.getElementById("status");
+
+const recordingTimer =
+    document.getElementById("recordingTimer");
+
+const timerText =
+    document.getElementById("timerText");
+
+const currentTime =
+    document.getElementById("currentTime");
+
+const currentDate =
+    document.getElementById("currentDate");
+
+const filename =
+    document.getElementById("filename");
+
+const result =
+    document.getElementById("result");
+
+const recordedVideo =
+    document.getElementById("recordedVideo");
+
+const downloadButton =
+    document.getElementById("downloadButton");
+
+const newButton =
+    document.getElementById("newButton");
+
+const canvas =
+    document.getElementById("recordCanvas");
+
+const ctx =
+    canvas.getContext("2d");
+
+
+/* Clock */
+
+function updateClock() {
+
+    const now = new Date();
+
+    currentTime.textContent =
+        now.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false
+        });
+
+    currentDate.textContent =
+        now.toLocaleDateString([], {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric"
+        });
+}
+
+updateClock();
+
+setInterval(updateClock, 1000);
+
+
+/* Login */
+
+function login() {
+
+    if (codeInput.value === ACCESS_CODE) {
+
+        loginScreen.style.display = "none";
+
+        recorderScreen.style.display = "block";
+
+        loginError.textContent = "";
+
+        status.textContent =
+            "Press Record to start.";
+
+    } else {
+
+        loginError.textContent =
+            "Incorrect access code.";
+
+        codeInput.value = "";
+
+        codeInput.focus();
+    }
+}
+
+loginButton.addEventListener(
+    "click",
+    login
+);
+
+codeInput.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (event.key === "Enter") {
+            login();
+        }
+
+    }
+);
+
+
+/* Start */
+
+async function startRecording() {
+
+    if (recording) {
+        return;
+    }
+
+    try {
+
+        status.textContent =
+            "Starting camera and microphone...";
+
+
+        /*
+         * Get camera and microphone.
+         */
+
+        cameraStream =
+            await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: true
+            });
+
+
+        /*
+         * Show camera.
+         */
+
+        preview.srcObject =
+            cameraStream;
+
+        await preview.play();
+
+
+        /*
+         * Wait until the browser knows
+         * the real camera resolution.
+         */
+
+        if (
+            preview.videoWidth === 0 ||
+            preview.videoHeight === 0
+        ) {
+
+            await new Promise(resolve => {
+
+                preview.onloadedmetadata =
+                    resolve;
+
+            });
+
+        }
+
+
+        const width =
+            preview.videoWidth || 1280;
+
+        const height =
+            preview.videoHeight || 720;
+
+
+        /*
+         * Canvas becomes the recorded video.
+         */
+
+        canvas.width = width;
+        canvas.height = height;
+
+
+        /*
+         * Create video stream from canvas.
+         */
+
+        canvasStream =
+            canvas.captureStream(30);
+
+
+        /*
+         * Add microphone directly.
+         *
+         * No AudioContext is needed.
+         */
+
+        const audioTrack =
+            cameraStream.getAudioTracks()[0];
+
+        if (audioTrack) {
+
+            canvasStream.addTrack(
+                audioTrack
+            );
+
+        }
+
+
+        /*
+         * Check MediaRecorder support.
+         */
+
+        let mimeType = "";
+
+        if (
+            MediaRecorder.isTypeSupported(
+                "video/webm;codecs=vp8,opus"
+            )
+        ) {
+
+            mimeType =
+                "video/webm;codecs=vp8,opus";
+
+        } else if (
+            MediaRecorder.isTypeSupported(
+                "video/webm"
+            )
+        ) {
+
+            mimeType =
+                "video/webm";
+
+        } else {
+
+            throw new Error(
+                "Your browser does not support WebM recording."
+            );
+
+        }
+
+
+        /*
+         * Create recorder.
+         */
+
+        recorder =
+            new MediaRecorder(
+                canvasStream,
+                {
+                    mimeType: mimeType
+                }
+            );
+
+
+        chunks = [];
+
+
+        recorder.ondataavailable =
+            function(event) {
+
+                if (event.data.size > 0) {
+
+                    chunks.push(
+                        event.data
+                    );
+
+                }
+
+            };
+
+
+        recorder.onstop =
+            finishRecording;
+
+
+        /*
+         * Start drawing the camera
+         * and timestamp.
+         */
+
+        recording = true;
+
+        drawFrame();
+
+
+        /*
+         * Start recorder.
+         */
+
+        recorder.start(1000);
+
+
+        recordButton.disabled = true;
+
+        stopButton.disabled = false;
+
+        recordingTimer.style.display =
+            "block";
+
+        status.textContent =
+            "Recording...";
+
+
+        startTimer();
+
+    } catch (error) {
+
+        console.error(error);
+
+        status.textContent =
+            "Could not start recording.";
+
+        alert(
+            "Could not start the camera/microphone.\n\n" +
+            error.message
+        );
+
+        cleanup();
+
+    }
+}
+
+
+/* Draw camera + timestamp */
+
+function drawFrame() {
+
+    if (!recording) {
+        return;
+    }
+
+
+    /*
+     * Draw camera.
+     */
+
+    ctx.drawImage(
+        preview,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    /*
+     * Timestamp.
+     */
+
+    const now =
+        new Date();
+
+
+    const date =
+        now.toLocaleDateString([], {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric"
+        });
+
+
+    const time =
+        now.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false
+        });
+
+
+    const text =
+        date + " " + time;
+
+
+    /*
+     * Timestamp size.
+     */
+
+    const fontSize =
+        Math.max(
+            20,
+            Math.round(
+                canvas.width * 0.025
+            )
+        );
+
+
+    ctx.font =
+        "bold " +
+        fontSize +
+        "px Arial";
+
+
+    const padding =
+        Math.round(
+            fontSize * 0.6
+        );
+
+
+    const textWidth =
+        ctx.measureText(text).width;
+
+
+    const boxWidth =
+        textWidth +
+        padding * 2;
+
+
+    const boxHeight =
+        fontSize +
+        padding * 1.5;
+
+
+    /*
+     * Timestamp background.
+     */
+
+    ctx.fillStyle =
+        "rgba(0,0,0,0.7)";
+
+
+    ctx.fillRect(
+        padding,
+        padding,
+        boxWidth,
+        boxHeight
+    );
+
+
+    /*
+     * Timestamp text.
+     */
+
+    ctx.fillStyle =
+        "#ffffff";
+
+
+    ctx.textBaseline =
+        "middle";
+
+
+    ctx.fillText(
+        text,
+        padding * 2,
+        padding + boxHeight / 2
+    );
+
+
+    animationFrame =
+        requestAnimationFrame(
+            drawFrame
+        );
+}
+
+
+/* Stop */
+
+function stopRecording() {
+
+    if (
+        !recorder ||
+        recorder.state === "inactive"
+    ) {
+
+        return;
+    }
+
+
+    recording = false;
+
+
+    cancelAnimationFrame(
+        animationFrame
+    );
+
+
+    stopTimer();
+
+
+    recorder.stop();
+
+
+    recordButton.disabled = false;
+
+    stopButton.disabled = true;
+
+    recordingTimer.style.display =
+        "none";
+
+
+    status.textContent =
+        "Finishing recording...";
+
+}
+
+
+/* Finished */
+
+function finishRecording() {
+
+    /*
+     * Create final video file.
+     */
+
+    recordingBlob =
+        new Blob(
+            chunks,
+            {
+                type: recorder.mimeType
+            }
+        );
+
+
+    /*
+     * Create video URL.
+     */
+
+    if (recordingURL) {
+
+        URL.revokeObjectURL(
+            recordingURL
+        );
+
+    }
+
+
+    recordingURL =
+        URL.createObjectURL(
+            recordingBlob
+        );
+
+
+    recordedVideo.src =
+        recordingURL;
+
+
+    result.style.display =
+        "block";
+
+
+    status.textContent =
+        "Recording finished.";
+
+
+    /*
+     * Camera can now stop.
+     */
+
+    if (cameraStream) {
+
+        cameraStream
+            .getTracks()
+            .forEach(
+                track => track.stop()
+            );
+
+    }
+
+
+    if (canvasStream) {
+
+        canvasStream
+            .getTracks()
+            .forEach(
+                track => track.stop()
+            );
+
+    }
+
+
+    preview.srcObject =
+        null;
+
+}
+
+
+/* Timer */
+
+function startTimer() {
+
+    recordingSeconds = 0;
+
+    updateTimer();
+
+
+    timerInterval =
+        setInterval(
+            function() {
+
+                recordingSeconds++;
+
+                updateTimer();
+
+            },
+            1000
+        );
+}
+
+
+function stopTimer() {
+
+    if (timerInterval) {
+
+        clearInterval(
+            timerInterval
+        );
+
+        timerInterval = null;
+
+    }
+}
+
+
+function updateTimer() {
+
+    const minutes =
+        Math.floor(
+            recordingSeconds / 60
+        );
+
+
+    const seconds =
+        recordingSeconds % 60;
+
+
+    timerText.textContent =
+        String(minutes).padStart(
+            2,
+            "0"
+        ) +
+        ":" +
+        String(seconds).padStart(
+            2,
+            "0"
+        );
+}
+
+
+/* Download */
+
+function downloadRecording() {
+
+    if (
+        !recordingBlob ||
+        !recordingURL
+    ) {
+
+        return;
+    }
+
+
+    let name =
+        filename.value.trim();
+
+
+    if (!name) {
+
+        name =
+            "recording";
+
+    }
+
+
+    name =
+        name.replace(
+            /[<>:"/\\|?*]/g,
+            "_"
+        );
+
+
+    if (
+        !name
+            .toLowerCase()
+            .endsWith(".webm")
+    ) {
+
+        name += ".webm";
+
+    }
+
+
+    const link =
+        document.createElement(
+            "a"
+        );
+
+
+    link.href =
+        recordingURL;
+
+
+    link.download =
+        name;
+
+
+    document.body.appendChild(
+        link
+    );
+
+
+    link.click();
+
+
+    link.remove();
+
+}
+
+
+downloadButton.addEventListener(
+    "click",
+    downloadRecording
+);
+
+
+/* New recording */
+
+function newRecording() {
+
+    recordedVideo.pause();
+
+    recordedVideo.removeAttribute(
+        "src"
+    );
+
+    recordedVideo.load();
+
+
+    if (recordingURL) {
+
+        URL.revokeObjectURL(
+            recordingURL
+        );
+
+        recordingURL = null;
+
+    }
+
+
+    recordingBlob = null;
+
+    chunks = [];
+
+    result.style.display =
+        "none";
+
+
+    status.textContent =
+        "Press Record to start.";
+
+}
+
+
+/* Cleanup */
+
+function cleanup() {
+
+    recording = false;
+
+
+    cancelAnimationFrame(
+        animationFrame
+    );
+
+
+    stopTimer();
+
+
+    if (cameraStream) {
+
+        cameraStream
+            .getTracks()
+            .forEach(
+                track => track.stop()
+            );
+
+    }
+
+
+    if (canvasStream) {
+
+        canvasStream
+            .getTracks()
+            .forEach(
+                track => track.stop()
+            );
+
+    }
+
+
+    cameraStream = null;
+
+    canvasStream = null;
+
+    preview.srcObject = null;
+
+}
+
+
+newButton.addEventListener(
+    "click",
+    newRecording
+);
+
+
+recordButton.addEventListener(
+    "click",
+    startRecording
+);
+
+
+stopButton.addEventListener(
+    "click",
+    stopRecording
+);
+
+
+window.addEventListener(
+    "beforeunload",
+    cleanup
+);
+
+</script>
+
+</body>
+</html>
